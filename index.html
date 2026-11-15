@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -28,6 +27,7 @@ display:flex;align-items:flex-start;justify-content:space-between;
 padding:16px 65px;
 background:linear-gradient(to bottom,rgba(0,0,0,.9),transparent);
 pointer-events:none;
+transition:opacity .35s ease,visibility .35s;
 }
 
 .logo{
@@ -41,16 +41,17 @@ display:flex;align-items:center;gap:12px;padding-top:38px;
 pointer-events:auto;
 }
 
-.audio-toggle,.auto-toggle{
+.audio-toggle,.auto-toggle,.upload-toggle{
 height:42px;border-radius:25px;background:rgba(255,255,255,.1);
 display:flex;align-items:center;justify-content:center;gap:8px;
 transition:.2s;
 }
 
 .audio-toggle{width:42px;flex-shrink:0}
-.auto-toggle{padding:0 13px;font-size:11px;font-weight:800;white-space:nowrap}
+.auto-toggle,.upload-toggle{padding:0 13px;font-size:11px;font-weight:800;white-space:nowrap}
+.upload-toggle{height:42px;border-radius:25px;background:rgba(255,255,255,.1);font-weight:800;transition:.2s}
 .auto-toggle.active{background:var(--accent)}
-.audio-toggle:hover,.auto-toggle:hover{background:rgba(255,255,255,.23)}
+.audio-toggle:hover,.auto-toggle:hover,.upload-toggle:hover{background:rgba(255,255,255,.23)}
 
 /* AUDIO */
 
@@ -100,6 +101,7 @@ background:linear-gradient(to bottom,rgba(0,0,0,.18),transparent 20%,transparent
 .video-info{
 position:absolute;bottom:42px;left:35px;right:100px;
 z-index:4;pointer-events:none;
+transition:opacity .35s ease,visibility .35s;
 }
 
 .caption{
@@ -110,6 +112,7 @@ text-shadow:0 2px 8px rgba(0,0,0,.8);overflow-wrap:anywhere;
 .action-rail{
 position:absolute;right:28px;bottom:90px;z-index:5;
 display:flex;flex-direction:column;align-items:center;gap:22px;
+transition:opacity .35s ease,visibility .35s;
 }
 
 .action{display:flex;flex-direction:column;align-items:center;gap:7px}
@@ -126,7 +129,10 @@ display:grid;place-items:center;transition:.2s;
 position:absolute;bottom:0;left:0;right:0;height:4px;
 background:rgba(255,255,255,.2);z-index:8;cursor:pointer;
 }
+
 .progress-bar{height:100%;width:0%;background:var(--accent)}
+
+/* PLAY INDICATOR */
 
 .play-indicator{
 position:absolute;z-index:6;left:50%;top:50%;
@@ -136,6 +142,29 @@ display:grid;place-items:center;background:rgba(0,0,0,.5);
 opacity:0;pointer-events:none;transition:.2s;
 }
 .play-indicator.show{opacity:1;transform:translate(-50%,-50%) scale(1)}
+
+/* AUTO HIDE TITLE + SAVE/DOWNLOAD ONLY */
+
+.video-info,
+.action-rail{
+opacity:1;
+visibility:visible;
+transition:opacity .35s ease,visibility .35s;
+}
+
+.video-info.ui-hidden,
+.action-rail.ui-hidden{
+opacity:0;
+visibility:hidden;
+pointer-events:none;
+}
+
+.video-info.ui-visible,
+.action-rail.ui-visible{
+opacity:1;
+visibility:visible;
+pointer-events:auto;
+}
 
 /* DOWNLOAD PROGRESS */
 
@@ -190,7 +219,7 @@ font-size:12px;opacity:0;transition:.2s;pointer-events:none;
 .header{padding:12px 25px;height:135px}
 .logo{width:min(560px,calc(100vw - 145px));height:125px;max-width:calc(100vw - 145px)}
 .header-controls{gap:7px;padding-top:23px}
-.auto-toggle{height:37px;padding:0 9px;font-size:9px}
+.auto-toggle,.upload-toggle{height:37px;padding:0 9px;font-size:9px}
 .audio-toggle{width:37px;height:37px}
 .audio-panel{right:20px;top:95px}
 .video-info{left:18px;bottom:30px;right:75px}
@@ -203,7 +232,7 @@ font-size:12px;opacity:0;transition:.2s;pointer-events:none;
 .logo{width:calc(100vw - 120px);height:105px}
 .header{height:115px;padding:10px 22px}
 .header-controls{gap:5px;padding-top:20px}
-.auto-toggle{padding:0 7px;font-size:8px}
+.auto-toggle,.upload-toggle{padding:0 7px;font-size:8px}
 }
 
 /* TERMS */
@@ -272,6 +301,8 @@ alt="Basically TikTok">
 <button class="auto-toggle" id="autoSwipeButton" onclick="toggleAutoSwipe()" aria-label="Toggle auto swipe">
 <span id="autoSwipeLabel">Auto Swipe: OFF</span>
 </button>
+
+<button class="upload-toggle" id="uploadVideoButton" onclick="openUploadVideo()">Upload a video</button>
 
 <button class="audio-toggle" onclick="toggleAudioPanel()" aria-label="Audio settings">
 <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="1.8">
@@ -348,7 +379,7 @@ alt="Basically TikTok">
 <h2>8. Changes to these terms</h2>
 <p>These terms may be updated as the website changes. Continued use after an update means you accept the revised terms.</p>
 <h2>9. Contact</h2>
-<p>If you have a question about these terms or the website, contact the website owner through the contact method provided on the site, if available.</p>
+<p>If you have a question about the website, contact the website owner through the contact method provided on the site, if available.</p>
 </div>
 <div class="terms-actions">
 <button class="terms-agree" id="termsFinalAgree">Agree and Continue</button>
@@ -410,6 +441,19 @@ const videos = [
 ...Array.from({length:8},()=>({title:"",url:"",show:false}))
 ];
 
+/* RANDOMIZE VIDEO ORDER ON EVERY LOAD */
+
+function shuffleVideos(array){
+for(let i=array.length-1;i>0;i--){
+const j=Math.floor(Math.random()*(i+1));
+[array[i],array[j]]=[array[j],array[i]];
+}
+return array;
+}
+
+const playableVideos=videos.filter(video=>video.show&&video.url.trim());
+shuffleVideos(playableVideos);
+
 /* AUDIO */
 
 const volumeSlider=document.getElementById("volumeSlider");
@@ -434,15 +478,23 @@ applyAudio();
 });
 
 function toggleMute(){muted=!muted;applyAudio()}
-function toggleAudioPanel(){document.getElementById("audioPanel").classList.toggle("open")}
-
-document.addEventListener("click",event=>{
-const panel=document.getElementById("audioPanel");
-const button=document.querySelector(".audio-toggle");
-if(!panel.contains(event.target)&&!button.contains(event.target))panel.classList.remove("open");
-});
+function toggleAudioPanel(){
+document.getElementById("audioPanel").classList.toggle("open");
+showUI();
+}
 
 /* AUTO SWIPE */
+
+/* Add your upload page URL between the quotes when it is ready. */
+const uploadVideoLink = "";
+
+function openUploadVideo(){
+if(!uploadVideoLink.trim()){
+showToast("Not working yet!");
+return;
+}
+window.open(uploadVideoLink,"_blank","noopener,noreferrer");
+}
 
 let autoSwipe=false;
 
@@ -454,6 +506,7 @@ button.classList.toggle("active",autoSwipe);
 label.textContent=autoSwipe?"Auto Swipe: ON":"Auto Swipe: OFF";
 document.querySelectorAll(".video-slot video").forEach(video=>video.loop=!autoSwipe);
 showToast(autoSwipe?"Auto Swipe enabled":"Auto Swipe disabled");
+showUI();
 }
 
 function goToNextVideo(currentVideo){
@@ -495,6 +548,7 @@ savedVideos.add(number);
 button.classList.add("saved");
 showToast("Video saved");
 }
+showUI();
 }
 
 function toggleVideo(video,indicator,icon){
@@ -505,14 +559,68 @@ icon.innerHTML='<svg width="25" height="25" viewBox="0 0 24 24" fill="white"><pa
 video.pause();
 icon.innerHTML='<svg width="25" height="25" viewBox="0 0 24 24" fill="white"><path d="M8 5v14l11-7z"/></svg>';
 }
+
+if(video.paused){
+showUI();
+}else{
+showUI();
+}
+
 indicator.classList.add("show");
 setTimeout(()=>indicator.classList.remove("show"),450);
+}
+
+/* AUTO-HIDE UI AFTER 2 SECONDS */
+
+let hideUITimer=null;
+
+function getActiveVideo(){
+return document.querySelector(".video-slot.active");
+}
+
+function showUI(){
+document.querySelectorAll(".video-info,.action-rail").forEach(element=>{
+element.classList.remove("ui-hidden");
+element.classList.add("ui-visible");
+});
+
+clearTimeout(hideUITimer);
+
+const activeSlot=getActiveVideo();
+const activeVideo=activeSlot?.querySelector("video");
+
+/* Keep the title and buttons visible while paused; hide them 2 seconds
+   after the pointer stops moving while the video is playing. */
+if(activeVideo&&!activeVideo.paused&&!activeVideo.ended){
+hideUITimer=setTimeout(hideUI,2000);
+}
+}
+
+function hideUI(){
+const activeSlot=getActiveVideo();
+const activeVideo=activeSlot?.querySelector("video");
+
+if(!activeVideo||activeVideo.paused||activeVideo.ended)return;
+
+if(activeSlot){
+activeSlot.querySelector(".video-info")?.classList.add("ui-hidden");
+activeSlot.querySelector(".action-rail")?.classList.add("ui-hidden");
+}
+}
+
+function setupUIEvents(){
+
+/* Hovering/tapping the video reveals the title and action buttons. */
+feed.addEventListener("mousemove",showUI);
+feed.addEventListener("touchstart",showUI,{passive:true});
+
+document.addEventListener("keydown",showUI);
+
 }
 
 /* WEBM DOWNLOAD WITH BURNED-IN ANIMATED WATERMARK */
 
 let activeDownload=null;
-let downloadAbort=null;
 
 function setDownloadProgress(percent,status){
 const safe=Math.max(0,Math.min(100,percent));
@@ -565,6 +673,8 @@ setTimeout(()=>URL.revokeObjectURL(url),60000);
 }
 
 async function downloadVideo(item){
+
+showUI();
 
 if(activeDownload){
 showToast("A download is already running");
@@ -622,7 +732,6 @@ if(!ctx)throw new Error("Canvas recording is unavailable.");
 const canvasStream=canvas.captureStream(30);
 state.stream=canvasStream;
 
-/* Include source audio when the browser permits it. */
 try{
 if(source.captureStream){
 const sourceStream=source.captureStream();
@@ -668,7 +777,6 @@ console.error(error);
 return;
 }
 
-/* Animated Basically TikTok watermark burned into the video */
 const scale=Math.max(1,canvas.width/900);
 const fontSize=Math.max(19,Math.round(canvas.width*.038));
 const padding=Math.round(fontSize*.65);
@@ -685,7 +793,6 @@ ctx.font=`900 ${fontSize}px Inter, Arial, sans-serif`;
 ctx.textAlign="right";
 ctx.textBaseline="bottom";
 
-/* Dark backing improves visibility */
 const metrics=ctx.measureText(text);
 const textWidth=metrics.width;
 const x=canvas.width-padding;
@@ -793,9 +900,7 @@ function buildFeed(){
 
 feed.innerHTML="";
 
-videos.forEach((item,index)=>{
-
-if(!item.show||!item.url.trim())return;
+playableVideos.forEach((item,index)=>{
 
 const slot=document.createElement("section");
 slot.className="video-slot";
@@ -812,6 +917,14 @@ video.preload="metadata";
 video.muted=muted;
 video.volume=volume;
 
+video.addEventListener("play",()=>{
+showUI();
+});
+
+video.addEventListener("pause",()=>{
+if(slot.classList.contains("active"))showUI();
+});
+
 video.addEventListener("ended",()=>{
 if(autoSwipe)goToNextVideo(video);
 });
@@ -820,7 +933,7 @@ const shade=document.createElement("div");
 shade.className="video-shade";
 
 const info=document.createElement("div");
-info.className="video-info";
+info.className="video-info ui-visible";
 
 const caption=document.createElement("div");
 caption.className="caption";
@@ -828,7 +941,7 @@ caption.textContent=item.title;
 info.append(caption);
 
 const rail=document.createElement("div");
-rail.className="action-rail";
+rail.className="action-rail ui-visible";
 
 /* SAVE BUTTON */
 
@@ -892,6 +1005,7 @@ if(!video.duration)return;
 const rect=progressArea.getBoundingClientRect();
 const position=Math.max(0,Math.min(1,(event.clientX-rect.left)/rect.width));
 video.currentTime=position*video.duration;
+showUI();
 });
 
 frame.append(video,shade,info,rail,indicator,progressArea);
@@ -901,6 +1015,7 @@ feed.append(slot);
 });
 
 setupAutoplay();
+
 applyAudio();
 
 }
@@ -912,19 +1027,30 @@ function setupAutoplay(){
 const observer=new IntersectionObserver(entries=>{
 entries.forEach(entry=>{
 
-const video=entry.target.querySelector("video");
+const slot=entry.target;
+const video=slot.querySelector("video");
 if(!video)return;
 
 if(entry.isIntersecting&&entry.intersectionRatio>.65){
 
-document.querySelectorAll(".video-slot video").forEach(other=>{
-if(other!==video)other.pause();
+document.querySelectorAll(".video-slot").forEach(otherSlot=>{
+otherSlot.classList.remove("active");
+const other=otherSlot.querySelector("video");
+if(other&&other!==video){
+other.pause();
+other.currentTime=0;
+}
 });
+
+slot.classList.add("active");
 
 video.currentTime=0;
 video.play().catch(()=>{});
 
+showUI();
+
 }else{
+slot.classList.remove("active");
 video.pause();
 video.currentTime=0;
 }
@@ -994,6 +1120,7 @@ gate.classList.add("terms-step");
 question.style.display="block";
 documentStep.style.display="none";
 document.body.style.overflow="hidden";
+showUI();
 },2000);
 });
 
@@ -1027,6 +1154,7 @@ document.body.style.overflow="hidden";
 /* START */
 
 buildFeed();
+setupUIEvents();
 
 </script>
 </body>
