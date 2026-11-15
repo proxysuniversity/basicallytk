@@ -1,0 +1,1033 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Basically TikTok</title>
+
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
+
+*{margin:0;padding:0;box-sizing:border-box}
+
+:root{--background:#000;--text:#fff;--accent:#ff315b}
+
+html,body{
+width:100%;height:100%;background:#000;color:#fff;
+font-family:Inter,sans-serif;overflow:hidden;
+}
+
+button{font:inherit;border:none;cursor:pointer;color:inherit;background:none}
+
+/* HEADER */
+
+.header{
+height:190px;position:fixed;inset:0 0 auto;z-index:20;
+display:flex;align-items:flex-start;justify-content:space-between;
+padding:16px 65px;
+background:linear-gradient(to bottom,rgba(0,0,0,.9),transparent);
+pointer-events:none;
+}
+
+.logo{
+width:clamp(650px,76vw,1100px);height:175px;
+max-width:calc(100vw - 250px);
+object-fit:contain;object-position:left center;pointer-events:auto;
+}
+
+.header-controls{
+display:flex;align-items:center;gap:12px;padding-top:38px;
+pointer-events:auto;
+}
+
+.audio-toggle,.auto-toggle{
+height:42px;border-radius:25px;background:rgba(255,255,255,.1);
+display:flex;align-items:center;justify-content:center;gap:8px;
+transition:.2s;
+}
+
+.audio-toggle{width:42px;flex-shrink:0}
+.auto-toggle{padding:0 13px;font-size:11px;font-weight:800;white-space:nowrap}
+.auto-toggle.active{background:var(--accent)}
+.audio-toggle:hover,.auto-toggle:hover{background:rgba(255,255,255,.23)}
+
+/* AUDIO */
+
+.audio-panel{
+position:fixed;top:115px;right:55px;width:235px;padding:18px;
+background:#111;border:1px solid #303030;border-radius:13px;
+z-index:30;box-shadow:0 15px 40px rgba(0,0,0,.7);display:none;
+}
+
+.audio-panel.open{display:block}
+.audio-heading{display:flex;justify-content:space-between;align-items:center;font-size:13px;font-weight:700;margin-bottom:18px}
+.audio-heading button{color:#999;font-size:18px}
+.audio-row{display:flex;align-items:center;gap:12px;margin-bottom:15px}
+.audio-row input{width:100%;accent-color:var(--accent);cursor:pointer}
+.audio-number{font-size:11px;color:#aaa;width:32px;text-align:right}
+.audio-mute{width:100%;padding:10px;border-radius:8px;background:#292929;font-size:12px;font-weight:700}
+
+/* FEED */
+
+.feed{
+width:100%;height:100dvh;overflow-y:auto;scroll-snap-type:y mandatory;
+scrollbar-width:none;background:#000;
+}
+.feed::-webkit-scrollbar{display:none}
+
+.video-slot{
+height:100dvh;min-height:100dvh;width:100%;position:relative;
+display:flex;align-items:center;justify-content:center;
+scroll-snap-align:start;overflow:hidden;background:#000;
+}
+
+.video-frame{
+position:relative;width:100%;height:100%;display:flex;
+align-items:center;justify-content:center;background:#000;
+}
+
+.video-frame video{
+display:block;width:auto;height:auto;max-width:100%;max-height:100dvh;
+object-fit:contain;cursor:pointer;background:#000;
+}
+
+.video-shade{
+position:absolute;inset:0;pointer-events:none;
+background:linear-gradient(to bottom,rgba(0,0,0,.18),transparent 20%,transparent 65%,rgba(0,0,0,.75));
+}
+
+.video-info{
+position:absolute;bottom:42px;left:35px;right:100px;
+z-index:4;pointer-events:none;
+}
+
+.caption{
+font-size:14px;font-weight:600;line-height:1.6;
+text-shadow:0 2px 8px rgba(0,0,0,.8);overflow-wrap:anywhere;
+}
+
+.action-rail{
+position:absolute;right:28px;bottom:90px;z-index:5;
+display:flex;flex-direction:column;align-items:center;gap:22px;
+}
+
+.action{display:flex;flex-direction:column;align-items:center;gap:7px}
+.action button{
+width:44px;height:44px;border-radius:50%;
+background:rgba(0,0,0,.55);backdrop-filter:blur(10px);
+display:grid;place-items:center;transition:.2s;
+}
+.action button:hover{background:rgba(255,255,255,.2);transform:scale(1.08)}
+.action button.saved{color:var(--accent)}
+.action span{font-size:10px;font-weight:600}
+
+.progress-area{
+position:absolute;bottom:0;left:0;right:0;height:4px;
+background:rgba(255,255,255,.2);z-index:8;cursor:pointer;
+}
+.progress-bar{height:100%;width:0%;background:var(--accent)}
+
+.play-indicator{
+position:absolute;z-index:6;left:50%;top:50%;
+transform:translate(-50%,-50%) scale(.8);
+width:65px;height:65px;border-radius:50%;
+display:grid;place-items:center;background:rgba(0,0,0,.5);
+opacity:0;pointer-events:none;transition:.2s;
+}
+.play-indicator.show{opacity:1;transform:translate(-50%,-50%) scale(1)}
+
+/* DOWNLOAD PROGRESS */
+
+.download-overlay{
+position:fixed;inset:0;z-index:500;
+background:rgba(0,0,0,.78);backdrop-filter:blur(8px);
+display:none;align-items:center;justify-content:center;padding:20px;
+}
+.download-overlay.active{display:flex}
+
+.download-box{
+width:min(100%,390px);background:#151515;
+border:1px solid #303030;border-radius:17px;
+padding:25px;box-shadow:0 20px 70px #000;
+}
+
+.download-title{font-size:17px;font-weight:900;margin-bottom:8px}
+.download-subtitle{font-size:12px;color:#999;line-height:1.6;margin-bottom:22px}
+
+.download-track{
+height:9px;background:#333;border-radius:20px;overflow:hidden;
+}
+.download-fill{
+height:100%;width:0%;background:var(--accent);
+border-radius:20px;transition:width .15s;
+}
+
+.download-details{
+display:flex;justify-content:space-between;
+font-size:11px;color:#aaa;margin-top:10px;
+}
+
+.download-cancel{
+width:100%;padding:12px;border-radius:9px;
+background:#292929;font-size:12px;font-weight:800;margin-top:22px;
+}
+.download-cancel:hover{background:#393939}
+
+/* TOAST */
+
+.toast{
+position:fixed;z-index:600;bottom:30px;left:50%;
+transform:translate(-50%,20px);background:#181818;
+border:1px solid #383838;padding:12px 20px;border-radius:10px;
+font-size:12px;opacity:0;transition:.2s;pointer-events:none;
+}
+.toast.show{opacity:1;transform:translate(-50%,0)}
+
+/* MOBILE */
+
+@media(max-width:700px){
+.header{padding:12px 25px;height:135px}
+.logo{width:min(560px,calc(100vw - 145px));height:125px;max-width:calc(100vw - 145px)}
+.header-controls{gap:7px;padding-top:23px}
+.auto-toggle{height:37px;padding:0 9px;font-size:9px}
+.audio-toggle{width:37px;height:37px}
+.audio-panel{right:20px;top:95px}
+.video-info{left:18px;bottom:30px;right:75px}
+.action-rail{right:12px;bottom:75px;gap:17px}
+.action button{width:40px;height:40px}
+.video-frame video{max-width:100%;max-height:100dvh}
+}
+
+@media(max-width:380px){
+.logo{width:calc(100vw - 120px);height:105px}
+.header{height:115px;padding:10px 22px}
+.header-controls{gap:5px;padding-top:20px}
+.auto-toggle{padding:0 7px;font-size:8px}
+}
+
+/* TERMS */
+
+.terms-gate{
+position:fixed;inset:0;z-index:1000;display:none;
+align-items:center;justify-content:center;padding:22px;
+background:#fff;color:#111;font-family:Inter,sans-serif;
+}
+.terms-gate.active{display:flex}
+.terms-card{
+width:min(100%,520px);max-height:min(90dvh,760px);
+display:flex;flex-direction:column;background:transparent;
+color:#111;overflow:hidden;
+}
+.terms-loading{
+min-height:310px;display:flex;flex-direction:column;
+align-items:center;justify-content:center;gap:18px;
+}
+.terms-loading img{width:130px;height:130px;object-fit:contain}
+.terms-loading p{font-size:13px;color:#777;font-weight:600}
+.terms-content{padding:28px;display:none;min-height:0}
+#termsDocument{display:none}
+.terms-content h1{font-size:24px;letter-spacing:-.7px;margin-bottom:10px}
+.terms-intro{font-size:13px;line-height:1.6;color:#666;margin-bottom:20px}
+.terms-scroll{
+max-height:42dvh;overflow-y:auto;overscroll-behavior:contain;
+padding:16px;border:1px solid #e8e8e8;border-radius:12px;
+background:#fafafa;font-size:12px;line-height:1.75;color:#444;
+}
+.terms-scroll h2{font-size:13px;color:#171717;margin:12px 0 4px}
+.terms-scroll h2:first-child{margin-top:0}
+.terms-scroll p{margin-bottom:9px}
+.terms-actions{display:flex;gap:10px;margin-top:20px}
+.terms-actions button{flex:1;min-height:46px;border-radius:10px;font-size:13px;font-weight:800}
+.terms-agree{background:#111;color:#fff}
+.terms-disagree{background:#f0f0f0;color:#222}
+.terms-gate.terms-step .terms-loading{display:none}
+.terms-gate.terms-step .terms-content{display:block}
+.terms-hello{
+font-size:clamp(38px,8vw,64px);font-weight:900;letter-spacing:-2px;
+color:#111;text-align:center;display:none;
+}
+.terms-gate.hello-step .terms-card{display:none}
+.terms-gate.hello-step .terms-hello{display:block}
+.terms-declined{font-size:14px;line-height:1.6;color:#444;text-align:center;max-width:340px}
+.terms-declined strong{display:block;font-size:22px;color:#111;margin-bottom:8px}
+
+@media(max-width:480px){
+.terms-content{padding:22px}
+.terms-content h1{font-size:22px}
+.terms-scroll{max-height:43dvh}
+.terms-loading{min-height:270px}
+}
+</style>
+</head>
+
+<body>
+
+<header class="header">
+<img class="logo"
+src="https://proxysuniversity.github.io/basicallytk/Screenshot%202026-11-14%207.14.41%20PM.png"
+alt="Basically TikTok">
+
+<div class="header-controls">
+<button class="auto-toggle" id="autoSwipeButton" onclick="toggleAutoSwipe()" aria-label="Toggle auto swipe">
+<span id="autoSwipeLabel">Auto Swipe: OFF</span>
+</button>
+
+<button class="audio-toggle" onclick="toggleAudioPanel()" aria-label="Audio settings">
+<svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="1.8">
+<path d="M11 5 6 9H2v6h4l5 4V5Z"/>
+<path d="M15.5 8.5a5 5 0 0 1 0 7M19 5a10 10 0 0 1 0 14"/>
+</svg>
+</button>
+</div>
+</header>
+
+<div class="audio-panel" id="audioPanel">
+<div class="audio-heading"><span>Audio settings</span><button onclick="toggleAudioPanel()">×</button></div>
+<div class="audio-row">
+<input type="range" id="volumeSlider" min="0" max="100" value="70">
+<span class="audio-number" id="volumeNumber">70%</span>
+</div>
+<button class="audio-mute" id="muteButton" onclick="toggleMute()">Mute audio</button>
+</div>
+
+<main class="feed" id="feed"></main>
+
+<!-- DOWNLOAD MODAL -->
+<div class="download-overlay" id="downloadOverlay">
+<div class="download-box">
+<div class="download-title" id="downloadTitle">Preparing WEBM download</div>
+<div class="download-subtitle" id="downloadSubtitle">Your video is being processed with the Basically TikTok watermark.</div>
+<div class="download-track"><div class="download-fill" id="downloadFill"></div></div>
+<div class="download-details">
+<span id="downloadStatus">Preparing video...</span>
+<span id="downloadPercent">0%</span>
+</div>
+<button class="download-cancel" onclick="cancelDownload()">Cancel download</button>
+</div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<!-- TERMS -->
+<div class="terms-gate" id="termsGate" aria-modal="true" role="dialog" aria-label="Terms and conditions">
+<div class="terms-card">
+
+<div class="terms-loading" id="termsLoading">
+<img src="https://assets-v2.lottiefiles.com/a/a4d8e22c-1181-11ee-8361-2308fc78f9b5/NPmAYbcjRi.gif" alt="Loading">
+<p>Getting Basically ready...</p>
+</div>
+
+<div class="terms-content" id="termsQuestion">
+<h1>Terms and Conditions</h1>
+<p class="terms-intro">Before entering Basically, please review and accept the Terms and Conditions.</p>
+<div class="terms-actions">
+<button class="terms-disagree" id="termsDisagree">Disagree</button>
+<button class="terms-agree" id="termsFirstAgree">Agree</button>
+</div>
+</div>
+
+<div class="terms-content" id="termsDocument">
+<h1>Basically Terms</h1>
+<p class="terms-intro">Scroll through these terms, then press Agree to continue.</p>
+<div class="terms-scroll" tabindex="0">
+<h2>1. Using Basically</h2>
+<p>By using Basically, you agree to follow these Terms and Conditions. If you do not agree, do not use the website.</p>
+<h2>2. Content</h2>
+<p>Videos and other material displayed on Basically may be provided by the website owner or by third-party sources. We do not claim ownership of third-party content unless stated otherwise.</p>
+<h2>3. Respect copyright</h2>
+<p>You are responsible for making sure you have permission to download, save, share, or otherwise use content. Do not use Basically to violate copyright, privacy, or other people's rights.</p>
+<h2>4. Acceptable use</h2>
+<p>Do not attempt to disrupt the website, interfere with its features, misuse its services, or use it for unlawful activity.</p>
+<h2>5. Third-party links and services</h2>
+<p>Basically may rely on third-party websites, video hosts, or services. Those services have their own terms and privacy practices, and Basically is not responsible for their availability or operation.</p>
+<h2>6. Availability</h2>
+<p>Features may change, become unavailable, or be removed at any time. The website is provided on an as-available basis and may contain errors or interruptions.</p>
+<h2>7. No warranty</h2>
+<p>To the extent permitted by law, Basically is provided without guarantees that it will always be available, accurate, secure, or error-free.</p>
+<h2>8. Changes to these terms</h2>
+<p>These terms may be updated as the website changes. Continued use after an update means you accept the revised terms.</p>
+<h2>9. Contact</h2>
+<p>If you have a question about these terms or the website, contact the website owner through the contact method provided on the site, if available.</p>
+</div>
+<div class="terms-actions">
+<button class="terms-agree" id="termsFinalAgree">Agree and Continue</button>
+</div>
+</div>
+</div>
+<div class="terms-hello" id="termsHello">Hello!</div>
+</div>
+
+<script>
+
+/* VIDEO SLOTS: 2 ORIGINAL + 40 EXAMPLES + 8 EMPTY */
+
+const videos = [
+{title:"He gained the power of God🪽😂 #movie #shorts #edit #fyp #trending",url:"https://proxysuniversity.github.io/basicallytk/videoplayback%20(14).mp4",show:true},
+{title:"#fnaf #funny -|-gag post-|- #shi post #gag #gag post",url:"https://proxysuniversity.github.io/basicallytk/videoplayback%20(15).mp4",show:true},
+
+{title:"Sample 01 · Big Buck Bunny",url:"https://storage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4",show:true},
+{title:"Sample 02 · Elephants Dream",url:"https://storage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4",show:true},
+{title:"Sample 03 · Sintel",url:"https://storage.googleapis.com/gtv-videos-bucket/sample/Sintel.mp4",show:true},
+{title:"Sample 04 · Tears of Steel",url:"https://storage.googleapis.com/gtv-videos-bucket/sample/TearsOfSteel.mp4",show:true},
+{title:"Sample 05 · For Bigger Blazes",url:"https://storage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4",show:true},
+{title:"Sample 06 · For Bigger Escapes",url:"https://storage.googleapis.com/gtv-videos-bucket/sample/ForBiggerEscapes.mp4",show:true},
+{title:"Sample 07 · For Bigger Fun",url:"https://storage.googleapis.com/gtv-videos-bucket/sample/ForBiggerFun.mp4",show:true},
+{title:"Sample 08 · For Bigger Joyrides",url:"https://storage.googleapis.com/gtv-videos-bucket/sample/ForBiggerJoyrides.mp4",show:true},
+{title:"Sample 09 · For Bigger Meltdowns",url:"https://storage.googleapis.com/gtv-videos-bucket/sample/ForBiggerMeltdowns.mp4",show:true},
+{title:"Sample 10 · Subaru Outback",url:"https://storage.googleapis.com/gtv-videos-bucket/sample/SubaruOutbackOnStreetAndDirt.mp4",show:true},
+{title:"Sample 11 · Flower Clip",url:"https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4",show:true},
+{title:"Sample 12 · Big Buck Bunny Short",url:"https://www.w3schools.com/html/mov_bbb.mp4",show:true},
+{title:"Sample 13 · W3Schools Movie",url:"https://www.w3schools.com/html/movie.mp4",show:true},
+{title:"Sample 14 · Samplelib 5 Seconds",url:"https://samplelib.com/lib/preview/mp4/sample-5s.mp4",show:true},
+{title:"Sample 15 · Samplelib 10 Seconds",url:"https://samplelib.com/lib/preview/mp4/sample-10s.mp4",show:true},
+{title:"Sample 16 · Samplelib 15 Seconds",url:"https://samplelib.com/lib/preview/mp4/sample-15s.mp4",show:true},
+{title:"Sample 17 · Samplelib 20 Seconds",url:"https://samplelib.com/lib/preview/mp4/sample-20s.mp4",show:true},
+{title:"Sample 18 · Samplelib 30 Seconds",url:"https://samplelib.com/lib/preview/mp4/sample-30s.mp4",show:true},
+{title:"Sample 19 · W3C Sintel Trailer",url:"https://media.w3.org/2010/05/sintel/trailer.mp4",show:true},
+{title:"Sample 20 · W3C Bunny Trailer",url:"https://media.w3.org/2010/05/bunny/trailer.mp4",show:true},
+{title:"Sample 21 · Big Buck Bunny Again",url:"https://storage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4",show:true},
+{title:"Sample 22 · Elephants Dream Again",url:"https://storage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4",show:true},
+{title:"Sample 23 · Sintel Trailer Clip",url:"https://storage.googleapis.com/gtv-videos-bucket/sample/Sintel.mp4",show:true},
+{title:"Sample 24 · Tears of Steel Clip",url:"https://storage.googleapis.com/gtv-videos-bucket/sample/TearsOfSteel.mp4",show:true},
+{title:"Sample 25 · Action Demo",url:"https://storage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4",show:true},
+{title:"Sample 26 · Travel Demo",url:"https://storage.googleapis.com/gtv-videos-bucket/sample/ForBiggerEscapes.mp4",show:true},
+{title:"Sample 27 · Fun Demo",url:"https://storage.googleapis.com/gtv-videos-bucket/sample/ForBiggerFun.mp4",show:true},
+{title:"Sample 28 · Driving Demo",url:"https://storage.googleapis.com/gtv-videos-bucket/sample/ForBiggerJoyrides.mp4",show:true},
+{title:"Sample 29 · Comedy Demo",url:"https://storage.googleapis.com/gtv-videos-bucket/sample/ForBiggerMeltdowns.mp4",show:true},
+{title:"Sample 30 · Outdoor Demo",url:"https://storage.googleapis.com/gtv-videos-bucket/sample/SubaruOutbackOnStreetAndDirt.mp4",show:true},
+{title:"Sample 31 · Nature Close-up",url:"https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4",show:true},
+{title:"Sample 32 · Animation Clip",url:"https://www.w3schools.com/html/mov_bbb.mp4",show:true},
+{title:"Sample 33 · Short Movie Clip",url:"https://www.w3schools.com/html/movie.mp4",show:true},
+{title:"Sample 34 · Five-second Test",url:"https://samplelib.com/lib/preview/mp4/sample-5s.mp4",show:true},
+{title:"Sample 35 · Ten-second Test",url:"https://samplelib.com/lib/preview/mp4/sample-10s.mp4",show:true},
+{title:"Sample 36 · Fifteen-second Test",url:"https://samplelib.com/lib/preview/mp4/sample-15s.mp4",show:true},
+{title:"Sample 37 · Twenty-second Test",url:"https://samplelib.com/lib/preview/mp4/sample-20s.mp4",show:true},
+{title:"Sample 38 · Thirty-second Test",url:"https://samplelib.com/lib/preview/mp4/sample-30s.mp4",show:true},
+{title:"Sample 39 · Sintel Preview",url:"https://media.w3.org/2010/05/sintel/trailer.mp4",show:true},
+{title:"Sample 40 · Bunny Preview",url:"https://media.w3.org/2010/05/bunny/trailer.mp4",show:true},
+
+...Array.from({length:8},()=>({title:"",url:"",show:false}))
+];
+
+/* AUDIO */
+
+const volumeSlider=document.getElementById("volumeSlider");
+const volumeNumber=document.getElementById("volumeNumber");
+let muted=false;
+let volume=.7;
+
+function applyAudio(){
+document.querySelectorAll(".video-slot video").forEach(video=>{
+video.volume=volume;
+video.muted=muted;
+});
+volumeNumber.textContent=Math.round(volume*100)+"%";
+document.getElementById("muteButton").textContent=muted?"Unmute audio":"Mute audio";
+volumeSlider.value=volume*100;
+}
+
+volumeSlider.addEventListener("input",()=>{
+volume=Number(volumeSlider.value)/100;
+if(volume>0)muted=false;
+applyAudio();
+});
+
+function toggleMute(){muted=!muted;applyAudio()}
+function toggleAudioPanel(){document.getElementById("audioPanel").classList.toggle("open")}
+
+document.addEventListener("click",event=>{
+const panel=document.getElementById("audioPanel");
+const button=document.querySelector(".audio-toggle");
+if(!panel.contains(event.target)&&!button.contains(event.target))panel.classList.remove("open");
+});
+
+/* AUTO SWIPE */
+
+let autoSwipe=false;
+
+function toggleAutoSwipe(){
+autoSwipe=!autoSwipe;
+const button=document.getElementById("autoSwipeButton");
+const label=document.getElementById("autoSwipeLabel");
+button.classList.toggle("active",autoSwipe);
+label.textContent=autoSwipe?"Auto Swipe: ON":"Auto Swipe: OFF";
+document.querySelectorAll(".video-slot video").forEach(video=>video.loop=!autoSwipe);
+showToast(autoSwipe?"Auto Swipe enabled":"Auto Swipe disabled");
+}
+
+function goToNextVideo(currentVideo){
+const slots=[...document.querySelectorAll(".video-slot")];
+const currentIndex=slots.indexOf(currentVideo.closest(".video-slot"));
+if(currentIndex===-1||!slots.length)return;
+slots[(currentIndex+1)%slots.length].scrollIntoView({behavior:"smooth",block:"start"});
+}
+
+/* FEED AND TOAST */
+
+const feed=document.getElementById("feed");
+const savedVideos=new Set();
+let toastTimer;
+
+function showToast(message){
+const toast=document.getElementById("toast");
+toast.textContent=message;
+toast.classList.add("show");
+clearTimeout(toastTimer);
+toastTimer=setTimeout(()=>toast.classList.remove("show"),3000);
+}
+
+function createSaveIcon(){
+return `<svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M6 4.5A1.5 1.5 0 0 1 7.5 3h9A1.5 1.5 0 0 1 18 4.5V21l-6-4-6 4V4.5Z"/></svg>`;
+}
+
+function createDownloadIcon(){
+return `<svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12m-5-5 5 5 5-5"/><path d="M5 17v4h14v-4"/></svg>`;
+}
+
+function toggleSave(button,number){
+if(savedVideos.has(number)){
+savedVideos.delete(number);
+button.classList.remove("saved");
+showToast("Removed from saved");
+}else{
+savedVideos.add(number);
+button.classList.add("saved");
+showToast("Video saved");
+}
+}
+
+function toggleVideo(video,indicator,icon){
+if(video.paused){
+video.play().catch(()=>{});
+icon.innerHTML='<svg width="25" height="25" viewBox="0 0 24 24" fill="white"><path d="M7 5h4v14H7zM15 5h4v14h-4z"/></svg>';
+}else{
+video.pause();
+icon.innerHTML='<svg width="25" height="25" viewBox="0 0 24 24" fill="white"><path d="M8 5v14l11-7z"/></svg>';
+}
+indicator.classList.add("show");
+setTimeout(()=>indicator.classList.remove("show"),450);
+}
+
+/* WEBM DOWNLOAD WITH BURNED-IN ANIMATED WATERMARK */
+
+let activeDownload=null;
+let downloadAbort=null;
+
+function setDownloadProgress(percent,status){
+const safe=Math.max(0,Math.min(100,percent));
+document.getElementById("downloadFill").style.width=safe+"%";
+document.getElementById("downloadPercent").textContent=Math.round(safe)+"%";
+document.getElementById("downloadStatus").textContent=status;
+}
+
+function showDownloadProgress(){
+document.getElementById("downloadOverlay").classList.add("active");
+setDownloadProgress(0,"Preparing video...");
+}
+
+function closeDownloadProgress(){
+document.getElementById("downloadOverlay").classList.remove("active");
+}
+
+function cancelDownload(){
+if(!activeDownload)return;
+activeDownload.cancelled=true;
+if(activeDownload.recorder&&activeDownload.recorder.state!=="inactive"){
+try{activeDownload.recorder.stop()}catch(e){}
+}
+if(activeDownload.sourceVideo){
+activeDownload.sourceVideo.pause();
+}
+if(activeDownload.animationFrame)cancelAnimationFrame(activeDownload.animationFrame);
+if(activeDownload.stream)activeDownload.stream.getTracks().forEach(track=>track.stop());
+activeDownload=null;
+closeDownloadProgress();
+showToast("Download cancelled");
+}
+
+function safeFilename(name){
+return (name||"Basically-video")
+.replace(/[<>:"/\\|?*\x00-\x1F]/g,"")
+.replace(/\s+/g,"-")
+.slice(0,70)||"Basically-video";
+}
+
+function saveBlob(blob,filename){
+const url=URL.createObjectURL(blob);
+const link=document.createElement("a");
+link.href=url;
+link.download=filename;
+document.body.appendChild(link);
+link.click();
+link.remove();
+setTimeout(()=>URL.revokeObjectURL(url),60000);
+}
+
+async function downloadVideo(item){
+
+if(activeDownload){
+showToast("A download is already running");
+return;
+}
+
+if(!window.MediaRecorder||!HTMLCanvasElement.prototype.captureStream){
+showToast("WEBM recording is not supported in this browser");
+return;
+}
+
+const state={
+cancelled:false,
+recorder:null,
+sourceVideo:null,
+stream:null,
+animationFrame:null
+};
+
+activeDownload=state;
+showDownloadProgress();
+
+document.getElementById("downloadTitle").textContent="Preparing WEBM download";
+document.getElementById("downloadSubtitle").textContent="Recording your video with the animated Basically TikTok watermark.";
+
+const source=document.createElement("video");
+state.sourceVideo=source;
+source.crossOrigin="anonymous";
+source.src=item.url;
+source.playsInline=true;
+source.preload="auto";
+source.muted=false;
+
+try{
+
+await new Promise((resolve,reject)=>{
+source.onloadedmetadata=resolve;
+source.onerror=()=>reject(new Error("The video could not be loaded."));
+source.load();
+});
+
+if(state.cancelled)return;
+
+if(!source.videoWidth||!source.videoHeight){
+throw new Error("Video dimensions could not be read.");
+}
+
+const canvas=document.createElement("canvas");
+canvas.width=source.videoWidth;
+canvas.height=source.videoHeight;
+
+const ctx=canvas.getContext("2d");
+if(!ctx)throw new Error("Canvas recording is unavailable.");
+
+const canvasStream=canvas.captureStream(30);
+state.stream=canvasStream;
+
+/* Include source audio when the browser permits it. */
+try{
+if(source.captureStream){
+const sourceStream=source.captureStream();
+sourceStream.getAudioTracks().forEach(track=>canvasStream.addTrack(track));
+}
+}catch(error){
+console.warn("Audio capture unavailable:",error);
+}
+
+const mimeTypes=[
+"video/webm;codecs=vp9,opus",
+"video/webm;codecs=vp8,opus",
+"video/webm"
+];
+
+const mimeType=mimeTypes.find(type=>MediaRecorder.isTypeSupported(type));
+if(!mimeType)throw new Error("WEBM recording is not supported.");
+
+const recorder=new MediaRecorder(canvasStream,{mimeType});
+state.recorder=recorder;
+
+const chunks=[];
+recorder.ondataavailable=event=>{
+if(event.data&&event.data.size)chunks.push(event.data);
+};
+
+const recordingDone=new Promise((resolve,reject)=>{
+recorder.onstop=()=>resolve();
+recorder.onerror=()=>reject(new Error("The WEBM recording failed."));
+});
+
+let watermarkTime=0;
+let lastProgress=0;
+
+function drawFrame(){
+
+if(state.cancelled)return;
+
+try{
+ctx.drawImage(source,0,0,canvas.width,canvas.height);
+}catch(error){
+console.error(error);
+return;
+}
+
+/* Animated Basically TikTok watermark burned into the video */
+const scale=Math.max(1,canvas.width/900);
+const fontSize=Math.max(19,Math.round(canvas.width*.038));
+const padding=Math.round(fontSize*.65);
+const text="Basically TikTok";
+
+watermarkTime+=1/30;
+
+const movement=Math.sin(watermarkTime*.8)*Math.min(18,canvas.width*.012);
+const alpha=.82+Math.sin(watermarkTime*2)*.12;
+
+ctx.save();
+ctx.globalAlpha=alpha;
+ctx.font=`900 ${fontSize}px Inter, Arial, sans-serif`;
+ctx.textAlign="right";
+ctx.textBaseline="bottom";
+
+/* Dark backing improves visibility */
+const metrics=ctx.measureText(text);
+const textWidth=metrics.width;
+const x=canvas.width-padding;
+const y=canvas.height-padding+movement;
+
+ctx.fillStyle="rgba(0,0,0,.38)";
+ctx.beginPath();
+ctx.roundRect(
+x-textWidth-padding*.65,
+y-fontSize-padding*.55,
+textWidth+padding*1.3,
+fontSize+padding*1.1,
+fontSize*.25
+);
+ctx.fill();
+
+ctx.shadowColor="rgba(0,0,0,.7)";
+ctx.shadowBlur=8*scale;
+ctx.fillStyle="#ffffff";
+ctx.fillText(text,x,y);
+
+ctx.restore();
+
+if(source.duration&&Number.isFinite(source.duration)){
+const percent=(source.currentTime/source.duration)*100;
+if(percent-lastProgress>=.5){
+lastProgress=percent;
+setDownloadProgress(percent,"Recording video...");
+}
+}
+
+if(!source.ended&&!source.paused){
+state.animationFrame=requestAnimationFrame(drawFrame);
+}
+}
+
+source.currentTime=0;
+
+await new Promise((resolve,reject)=>{
+const onSeeked=()=>{cleanup();resolve()};
+const onError=()=>{cleanup();reject(new Error("Could not prepare the video."))};
+const cleanup=()=>{
+source.removeEventListener("seeked",onSeeked);
+source.removeEventListener("error",onError);
+};
+source.addEventListener("seeked",onSeeked,{once:true});
+source.addEventListener("error",onError,{once:true});
+});
+
+if(state.cancelled)return;
+
+recorder.start(500);
+await source.play();
+
+drawFrame();
+
+await new Promise((resolve,reject)=>{
+source.addEventListener("ended",resolve,{once:true});
+source.addEventListener("error",()=>reject(new Error("Video playback failed.")),{once:true});
+});
+
+if(state.cancelled)return;
+
+if(state.animationFrame)cancelAnimationFrame(state.animationFrame);
+
+if(recorder.state!=="inactive")recorder.stop();
+await recordingDone;
+
+if(state.cancelled)return;
+
+const blob=new Blob(chunks,{type:"video/webm"});
+if(!blob.size)throw new Error("The recorded file was empty.");
+
+setDownloadProgress(100,"Download ready");
+document.getElementById("downloadTitle").textContent="Your WEBM is ready";
+document.getElementById("downloadSubtitle").textContent="Your video has been saved with the animated Basically TikTok watermark.";
+
+saveBlob(blob,safeFilename(item.title)+".webm");
+
+canvasStream.getTracks().forEach(track=>track.stop());
+source.pause();
+activeDownload=null;
+
+setTimeout(closeDownloadProgress,1100);
+showToast("WEBM downloaded!");
+
+}catch(error){
+
+console.error("Download error:",error);
+
+if(state.stream)state.stream.getTracks().forEach(track=>track.stop());
+if(state.sourceVideo)state.sourceVideo.pause();
+
+activeDownload=null;
+closeDownloadProgress();
+
+showToast(error.message||"Could not download this video. The video host may block recording.");
+}
+
+}
+
+/* BUILD FEED */
+
+function buildFeed(){
+
+feed.innerHTML="";
+
+videos.forEach((item,index)=>{
+
+if(!item.show||!item.url.trim())return;
+
+const slot=document.createElement("section");
+slot.className="video-slot";
+
+const frame=document.createElement("div");
+frame.className="video-frame";
+
+const video=document.createElement("video");
+video.crossOrigin="anonymous";
+video.src=item.url;
+video.loop=!autoSwipe;
+video.playsInline=true;
+video.preload="metadata";
+video.muted=muted;
+video.volume=volume;
+
+video.addEventListener("ended",()=>{
+if(autoSwipe)goToNextVideo(video);
+});
+
+const shade=document.createElement("div");
+shade.className="video-shade";
+
+const info=document.createElement("div");
+info.className="video-info";
+
+const caption=document.createElement("div");
+caption.className="caption";
+caption.textContent=item.title;
+info.append(caption);
+
+const rail=document.createElement("div");
+rail.className="action-rail";
+
+/* SAVE BUTTON */
+
+const saveAction=document.createElement("div");
+saveAction.className="action";
+
+const saveButton=document.createElement("button");
+saveButton.innerHTML=createSaveIcon();
+saveButton.setAttribute("aria-label","Save video");
+saveButton.addEventListener("click",()=>toggleSave(saveButton,index));
+
+const saveLabel=document.createElement("span");
+saveLabel.textContent="Save";
+saveAction.append(saveButton,saveLabel);
+
+/* DOWNLOAD BUTTON */
+
+const downloadAction=document.createElement("div");
+downloadAction.className="action";
+
+const downloadButton=document.createElement("button");
+downloadButton.innerHTML=createDownloadIcon();
+downloadButton.setAttribute("aria-label","Download WEBM with watermark");
+downloadButton.addEventListener("click",()=>downloadVideo(item));
+
+const downloadLabel=document.createElement("span");
+downloadLabel.textContent="Download";
+
+downloadAction.append(downloadButton,downloadLabel);
+
+rail.append(saveAction,downloadAction);
+
+/* PLAY INDICATOR */
+
+const indicator=document.createElement("div");
+indicator.className="play-indicator";
+
+const icon=document.createElement("div");
+icon.innerHTML='<svg width="25" height="25" viewBox="0 0 24 24" fill="white"><path d="M8 5v14l11-7z"/></svg>';
+
+indicator.append(icon);
+
+video.addEventListener("click",()=>toggleVideo(video,indicator,icon));
+
+/* TIMELINE */
+
+const progressArea=document.createElement("div");
+progressArea.className="progress-area";
+
+const progressBar=document.createElement("div");
+progressBar.className="progress-bar";
+
+progressArea.append(progressBar);
+
+video.addEventListener("timeupdate",()=>{
+if(video.duration)progressBar.style.width=(video.currentTime/video.duration*100)+"%";
+});
+
+progressArea.addEventListener("click",event=>{
+if(!video.duration)return;
+const rect=progressArea.getBoundingClientRect();
+const position=Math.max(0,Math.min(1,(event.clientX-rect.left)/rect.width));
+video.currentTime=position*video.duration;
+});
+
+frame.append(video,shade,info,rail,indicator,progressArea);
+slot.append(frame);
+feed.append(slot);
+
+});
+
+setupAutoplay();
+applyAudio();
+
+}
+
+/* AUTOPLAY AND RESTART */
+
+function setupAutoplay(){
+
+const observer=new IntersectionObserver(entries=>{
+entries.forEach(entry=>{
+
+const video=entry.target.querySelector("video");
+if(!video)return;
+
+if(entry.isIntersecting&&entry.intersectionRatio>.65){
+
+document.querySelectorAll(".video-slot video").forEach(other=>{
+if(other!==video)other.pause();
+});
+
+video.currentTime=0;
+video.play().catch(()=>{});
+
+}else{
+video.pause();
+video.currentTime=0;
+}
+
+});
+},{threshold:[0,.65,1]});
+
+document.querySelectorAll(".video-slot").forEach(slot=>observer.observe(slot));
+
+}
+
+/* DISABLE RIGHT CLICK AND DRAGGING */
+
+document.addEventListener("contextmenu",event=>{
+if(event.target.closest("video,.video-frame,.logo"))event.preventDefault();
+});
+
+document.addEventListener("dragstart",event=>{
+if(event.target.matches("video,img"))event.preventDefault();
+});
+
+/* TERMS AND CONDITIONS */
+
+(function setupFirstVisitTerms(){
+
+const STORAGE_KEY="basically_terms_accepted_v1";
+const gate=document.getElementById("termsGate");
+const question=document.getElementById("termsQuestion");
+const documentStep=document.getElementById("termsDocument");
+
+const declinedMessage=`<div class="terms-declined"><strong>Access declined</strong>You disagreed to the Terms and Conditions. Basically is now closed. You can close this tab.</div>`;
+
+let accepted=false;
+
+try{accepted=localStorage.getItem(STORAGE_KEY)==="yes"}catch(error){console.warn(error)}
+
+if(!accepted){
+gate.classList.add("active");
+document.body.style.overflow="hidden";
+
+window.setTimeout(()=>{
+if(!gate.isConnected||accepted)return;
+gate.classList.add("terms-step");
+},2000);
+}
+
+document.getElementById("termsDisagree").addEventListener("click",()=>{
+gate.innerHTML=declinedMessage;
+gate.classList.add("active");
+try{window.close()}catch(error){}
+});
+
+document.getElementById("termsFirstAgree").addEventListener("click",()=>{
+gate.classList.add("terms-step");
+question.style.display="none";
+documentStep.style.display="block";
+});
+
+document.getElementById("termsFinalAgree").addEventListener("click",()=>{
+try{localStorage.setItem(STORAGE_KEY,"yes")}catch(error){console.warn(error)}
+gate.classList.add("hello-step");
+
+window.setTimeout(()=>{
+gate.classList.remove("active");
+gate.classList.remove("hello-step");
+gate.classList.add("terms-step");
+question.style.display="block";
+documentStep.style.display="none";
+document.body.style.overflow="hidden";
+},2000);
+});
+
+})();
+
+/* PRESS B TO REOPEN TERMS */
+
+document.addEventListener("keydown",event=>{
+
+if(event.key.toLowerCase()!=="b")return;
+if(event.ctrlKey||event.metaKey||event.altKey)return;
+
+if(event.target&&(
+event.target.isContentEditable||
+["INPUT","TEXTAREA","SELECT"].includes(event.target.tagName)
+))return;
+
+const gate=document.getElementById("termsGate");
+if(!gate)return;
+
+gate.classList.remove("hello-step");
+gate.classList.add("active","terms-step");
+
+document.getElementById("termsQuestion").style.display="block";
+document.getElementById("termsDocument").style.display="none";
+
+document.body.style.overflow="hidden";
+
+});
+
+/* START */
+
+buildFeed();
+
+</script>
+</body>
+</html>
